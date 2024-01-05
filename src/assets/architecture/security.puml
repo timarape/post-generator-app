@@ -1,0 +1,45 @@
+@startuml Security Architecture
+header //IkenHost
+footer Page %page% of %lastpage%
+title "Authentication Flow"
+actor "User" as User
+participant "Front End" as Portal
+participant Gateway
+participant "Auth\nService" as AuthService
+participant "Rest Api" as AuthAPI
+database AuthDatabase
+
+
+autonumber
+User -> Portal ++ : API Request
+group Step: Authentication
+    Portal -> Gateway ++: GET /api/v2/authenticate\nBearer Token
+    Gateway -> AuthService ++: Authenticate Token
+    AuthService --> AuthService : Validate\nToken
+    AuthService -[#green]> Gateway : Success, Token Validated
+else Authentication Failed
+    autonumber 5
+    AuthService -[#red]> Gateway -- : Request Failed
+    Gateway -[#red]> Portal : Authentication Failure
+    Portal -[#red]> AppUser : Login Again.
+    note right : Authentication has failed
+end
+
+autonumber 6
+
+
+
+
+group Call Backend API
+    Gateway -> AuthAPI ++ : GET api/v1/api's
+    AuthAPI --[#blue]> AuthAPI :Processing
+    group Database Call
+        autonumber 8.1
+        AuthAPI -> Database ++: Db Query
+        Database -> AuthAPI --: Data Respose
+    end
+    autonumber 9
+    AuthAPI -> Portal --: Orders
+end
+
+@enduml
